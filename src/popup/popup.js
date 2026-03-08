@@ -204,11 +204,10 @@ async function handleStart() {
 
     const isWebcamMode = selectedSource === 'webcam';
 
-    if ((isWebcamMode && !hasCamera) || (!hasCamera && !hasMic)) {
+    if ((isWebcamMode && !hasCamera)) {
         if (ui.errorMsg) {
             ui.errorMsg.style.display = 'block';
-            ui.errorMsg.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' +
-                (isWebcamMode ? "Câmera é obrigatória neste modo." : "Nenhum dispositivo selecionado.");
+            ui.errorMsg.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + "Câmera é obrigatória neste modo.";
         }
         return; 
     }
