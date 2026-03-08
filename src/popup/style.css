@@ -1,0 +1,376 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css');
+
+/* =========================================
+   RESET E ESTRUTURA BÁSICA
+   ========================================= */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
+    background: transparent;
+    color: #222;
+    width: 100%; 
+    height: 100vh;
+    overflow: hidden;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.kaptur-recorder-popup {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4); 
+}
+
+.container {
+    width: 360px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    padding: 1.5rem;
+    position: relative;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* =========================================
+   TIPOGRAFIA
+   ========================================= */
+.fontsize-2xl { font-size: 20px; font-weight: 700; color: #333; margin: 0; }
+.fontsize-md { font-size: 14px; font-weight: 600; color: #444; margin-bottom: 8px; display: block; }
+.fontsize-sm { font-size: 12px; color: #747474; margin-top: 8px; display: block; margin-bottom: 4px; }
+
+/* =========================================
+   HEADER
+   ========================================= */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 1rem;
+}
+
+.header img {
+    width: 32px;
+    height: 32px;
+}
+
+.close-popup {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+    color: #bbb;
+    font-size: 18px;
+    transition: color 0.2s;
+    padding: 5px;
+}
+.close-popup:hover { color: #333; }
+
+/* =========================================
+   SELETORES DE FONTE (SLIDING TOGGLE)
+   ========================================= */
+.select-source-container {
+    display: flex;
+    position: relative;
+    background: #f0f0f0;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e0e0e0;
+    height: 70px; 
+}
+
+.select-source-container[data-selected-index="0"] .source-slider {
+    transform: translateX(0);
+}
+
+.select-source-container[data-selected-index="1"] .source-slider {
+    transform: translateX(100%);
+}
+
+.select-source-container[data-selected-index="2"] .source-slider {
+    transform: translateX(200%);
+}
+
+.source-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    
+    width: calc((100% - 8px) / 3); 
+    
+    height: calc(100% - 8px);
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    
+    z-index: 1;
+    border: 1px solid #ddd;
+    will-change: transform;
+}
+
+.source-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    z-index: 2;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color 0.3s;
+    user-select: none;
+    border-radius: 6px;
+}
+
+.source-option i {
+    font-size: 18px;
+    margin-bottom: 2px;
+    transition: color 0.3s;
+}
+
+.source-option.selected {
+    color: #00C0A3;
+}
+
+.source.selected {
+    background: #fff;
+    color: #00C0A3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transform: scale(1.02);
+}
+
+.source:hover:not(.selected) {
+    background: #e9e9e9;
+    color: #444;
+}
+
+/* =========================================
+   FORMULÁRIOS E INPUTS
+   ========================================= */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+select:hover { border-color: #ccc; }
+select:focus {
+    border-color: #00C0A3;
+    box-shadow: 0 0 0 3px rgba(0, 192, 163, 0.1);
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+input[type="checkbox"]:checked {
+    background: #00C0A3;
+    border-color: #00C0A3;
+}
+
+input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 45%; 
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg); 
+}
+
+#timer-select {
+    width: 183px;
+}
+
+/* =========================================
+   BOTÕES E RODAPÉ
+   ========================================= */
+.footer {
+    margin-top: 1.5rem;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    background: #00C0A3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(0, 192, 163, 0.2);
+}
+
+.btn:hover { background: #00A892; box-shadow: 0 6px 12px rgba(0, 192, 163, 0.3); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { 
+    opacity: 0.7; 
+    cursor: not-allowed; 
+    background: #999;
+    box-shadow: none;
+}
+
+/* =========================================
+   SEÇÃO DE ATALHOS (ACCORDION)
+   ========================================= */
+.shortcuts-wrapper {
+    margin-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.5rem;
+}
+
+/* Botão de Expandir */
+.shortcuts-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #888;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px;
+    transition: color 0.2s;
+    user-select: none;
+}
+
+.shortcuts-toggle:hover {
+    color: #00C0A3;
+}
+
+.shortcuts-toggle i {
+    transition: transform 0.3s ease;
+    font-size: 10px;
+}
+
+/* Classe para girar a setinha quando aberto */
+.shortcuts-toggle.active i {
+    transform: rotate(180deg);
+}
+
+/* Conteúdo (Oculto por padrão) */
+.shortcuts-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
+    opacity: 0;
+}
+
+/* Estado Aberto */
+.shortcuts-content.open {
+    max-height: 150px; /* Altura suficiente para caber o conteúdo */
+    opacity: 1;
+    margin-top: 10px;
+}
+
+/* Linhas dos atalhos */
+.shortcut-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #666;
+    padding: 0 5px;
+}
+
+/* Estilo de Tecla (KBD) */
+kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
+    color: #555;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+    white-space: nowrap;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 0; /* Adiciona padding para separar dos atalhos/footer */
+}
+
+/* Estilo Base para botões secundários */
+.secondary-btn {
+    background: transparent;
+    border: 1px solid #00C0A3;
+    color: #00C0A3;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.secondary-btn:hover:not(:disabled) {
+    background: rgba(0, 192, 163, 0.1);
+    color: #00A892;
+    border-color: #00A892;
+}
+
+.secondary-btn:active:not(:disabled) {
+    background: rgba(0, 192, 163, 0.2);
+}

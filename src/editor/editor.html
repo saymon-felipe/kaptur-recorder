@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Kaptur Editor</title>
+    
+    <link rel="stylesheet" href="./editor.css">
+    
+    <link rel="stylesheet" href="./studio/studio.css">
+    
+    <link rel="stylesheet" href="../lib/fontawesome/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="../../assets/icone-kaptur-recorder.png" alt="Logo" class="logo">
+            <h1>Editor de Vídeo</h1>
+            <button id="btn-open-studio" class="btn-secondary" style="margin-left: auto; border:1px solid #00C0A3; color:#00C0A3;">
+                <i class="fa-solid fa-layer-group"></i> Kaptur Studio
+            </button>
+        </header>
+
+        <div class="video-container">
+            <video id="video-player" controls></video>
+            <div id="processing-overlay">
+                <div class="spinner"></div>
+                <p id="loading-text">Processando...</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="timeline-container">
+                <div class="range-slider-container">
+                    <div class="slider-track"></div>
+                    <div class="slider-fill" id="range-fill"></div>
+                    <input type="range" id="range-min" min="0" max="100" value="0">
+                    <input type="range" id="range-max" min="0" max="100" value="100">
+                </div>
+                <div class="time-inputs">
+                    <input type="text" id="start-time" value="00:00:00">
+                    <input type="text" id="end-time" value="00:00:00">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="btn-cut" class="btn-primary" disabled>
+                    <i class="fa-solid fa-scissors"></i> Cortar
+                </button>
+                <button id="btn-download" class="btn-secondary" disabled>
+                    <i class="fa-solid fa-download"></i> Baixar original (Rápido)
+                </button>
+                <button id="btn-download-mp4" class="btn-secondary" disabled>
+                    <i class="fa-solid fa-file-video"></i> Baixar MP4 (Lento)
+                </button>
+                <button id="btn-download-gif" class="btn-secondary" disabled>
+                    <i class="fa-solid fa-image"></i> Baixar GIF
+                </button>
+                <button id="btn-drive" class="btn-google" disabled>
+                    <i class="fa-brands fa-google-drive"></i> Enviar Google Drive
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../lib/ffmpeg/umd/ffmpeg.js"></script>
+    <script src="../lib/ffmpeg/util.js"></script>
+    
+    <script type="module" src="./editor.js"></script>
+</body>
+</html>

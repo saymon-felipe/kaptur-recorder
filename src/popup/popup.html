@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kaptur Recorder</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="../lib/fontawesome/css/all.min.css">
+</head>
+
+<body>
+
+  <div class="kaptur-recorder-popup">
+
+    <div class="container">
+
+      <i class="fa-solid fa-xmark close-popup" id="close-btn" title="Fechar janela"></i>
+
+      <div class="header">
+        <img src="../../assets/icon.png" alt="Kaptur Icon">
+        <h1 class="fontsize-2xl">Kaptur Recorder</h1>
+      </div>
+
+      <div class="configurations">
+
+        <div class="form-group">
+          <div class="select-source-container">
+            <div class="source-slider" id="source-slider"></div>
+
+            <div class="source-option selected" data-source="tab">
+              <i class="fa-solid fa-table-columns"></i>
+              <span>Aba</span>
+            </div>
+            <div class="source-option" data-source="screen">
+              <i class="fa-solid fa-display"></i>
+              <span>Tela</span>
+            </div>
+            <div class="source-option" data-source="webcam">
+              <i class="fa-solid fa-camera"></i>
+              <span>Câmera</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="fontsize-md">Configurações</label>
+
+          <label for="camera-select" class="fontsize-sm">
+            <i class="fa-solid fa-video"></i> Câmera
+          </label>
+          <select id="camera-select">
+            <option value="">Carregando...</option>
+          </select>
+
+          <label for="mic-select" class="fontsize-sm">
+            <i class="fa-solid fa-microphone"></i> Microfone
+          </label>
+          <select id="mic-select">
+            <option value="">Carregando...</option>
+          </select>
+        </div>
+
+        <div class="form-group radio-group">
+          <input type="checkbox" id="use-timer" checked>
+          <select id="timer-select">
+            <option value="3">3 segundos</option>
+            <option value="5">5 segundos</option>
+            <option value="10">10 segundos</option>
+          </select>
+          <span class="fontsize-sm" style="margin-top: 0; font-size: 13px;">de contagem</span>
+        </div>
+
+      </div>
+
+      <div class="footer">
+        <button class="btn" id="start-btn">
+          <i class="fa-solid fa-circle-dot"></i>
+          Iniciar gravação
+        </button>
+        <p id="device-error-msg"
+          style="color: #ff4444; font-size: 11px; margin-top: 8px; text-align: center; display: none;">
+          <i class="fa-solid fa-circle-exclamation"></i> Nenhum dispositivo selecionado ou encontrado.
+        </p>
+      </div>
+
+      <div class="shortcuts-wrapper">
+
+        <div class="shortcuts-toggle" id="shortcuts-toggle">
+          <span>Ver atalhos de teclado</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+
+        <div class="shortcuts-content" id="shortcuts-content">
+          <div class="shortcut-row">
+            <span>Pausar / Retomar</span>
+            <kbd>Alt + Shift + P</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span>Parar (Salvar)</span>
+            <kbd>Alt + Shift + S</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span>Cancelar</span>
+            <kbd>Alt + Shift + C</kbd>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions" style="padding-bottom: 0;">
+        <button id="btn-open-studio" class="secondary-btn">
+          <i class="fa-solid fa-film"></i> Abrir Studio
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+
+</body>
+
+</html>

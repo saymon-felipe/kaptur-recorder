@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "Kaptur Recorder",
+  "version": "3.1.0",
+  "description": "Kaptur faz a gravação da tela ou webcam. Após gravar, baixe o vídeo ou envie rapidamente para o seu Google Drive.",
+  "permissions": [
+    "tabs", "scripting", "storage", "tabCapture", "downloads", "identity", "clipboardWrite", "webNavigation"
+  ],
+  "background": {
+    "service_worker": "src/background/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_icon": { "16": "assets/icon.png", "48": "assets/icon.png", "128": "assets/icon.png" }
+  },
+  "icons": { "16": "assets/icon.png", "48": "assets/icon.png", "128": "assets/icon.png" },
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "oauth2": {
+    "client_id": "120541605683-30fomv3rr148rb0g2q848gccpg468ce7.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/*",
+        "src/popup/*",
+        "src/editor/*",
+        "src/playback/*",
+        "src/lib/fontawesome/css/*",
+        "src/lib/fontawesome/webfonts/*",
+        "src/lib/ffmpeg/util.js", 
+        "src/lib/ffmpeg/umd/*",
+        "src/workers/whisper.worker.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "src/core/constants.js", "src/core/utils.js", "src/services/UIManager.js",
+        "src/services/AudioMixer.js", "src/services/SignalingService.js",
+        "src/services/RecorderManager.js", "src/content/content.js"
+      ],
+      "css": ["src/content/style.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+    "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; child-src 'self';"
+  },
+  "commands": {
+    "toggle-pause": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "MacCtrl+Shift+P"
+      },
+      "description": "Pausar / Retomar Gravação"
+    },
+    "stop-recording": {
+      "suggested_key": {
+        "default": "Alt+Shift+S",
+        "mac": "MacCtrl+Shift+S"
+      },
+      "description": "Parar Gravação"
+    },
+    "cancel-recording": {
+      "suggested_key": {
+        "default": "Alt+Shift+C",
+        "mac": "MacCtrl+Shift+C"
+      },
+      "description": "Cancelar Gravação"
+    }
+  }
+}
