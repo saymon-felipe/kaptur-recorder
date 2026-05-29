@@ -60,7 +60,7 @@ export class TranscodeService {
             });
             this.isLoaded = true;
         } catch (error) {
-            console.error("Kadem Transcoder: Erro crítico na inicialização.", error);
+            console.error("Kaptur Transcoder: Erro crítico na inicialização.", error);
             this.isLoaded = false;
             throw error;
         }

@@ -565,7 +565,7 @@ class EditorManager {
         const now = new Date();
         const date = now.toLocaleDateString("en-CA"); // YYYY-MM-DD
         const time = now.toTimeString().slice(0, 5).replace(":", "-"); // HH-MM
-        return `kadem-recorder-${date}_${time}`;
+        return `kaptur-recorder-${date}_${time}`;
     }
 
     /**

@@ -1,6 +1,6 @@
-# Kadem Recorder
+# Kaptur Recorder
 
-**Kadem Recorder** é uma extensão para o Chrome que permite gravar vídeos de forma simples e intuitiva. Com ela, você pode capturar a tela, a webcam e o áudio, editar clipes e salvar ou enviar os vídeos para o Google Drive. A extensão foi desenvolvida para facilitar a criação e o gerenciamento de gravações de vídeo.
+**Kaptur Recorder** é uma extensão para o Chrome que permite gravar vídeos de forma simples e intuitiva. Com ela, você pode capturar a tela, a webcam e o áudio, editar clipes e salvar ou enviar os vídeos para o Google Drive. A extensão foi desenvolvida para facilitar a criação e o gerenciamento de gravações de vídeo.
 
 ---
 
@@ -30,8 +30,8 @@ Siga os passos abaixo para instalar a extensão no seu navegador Chrome:
 ### 1️⃣ Clone o Repositório
 
 ```bash
-  git clone https://github.com/seu-usuario/kadem-recorder.git
-  cd kadem-recorder
+  git clone https://github.com/saymon-felipe/kaptur-recorder.git
+  cd kaptur-recorder
 ```
 
 ### 2️⃣ Acesse a Página de Extensões do Chrome
@@ -42,7 +42,7 @@ Siga os passos abaixo para instalar a extensão no seu navegador Chrome:
 ### 3️⃣ Carregue a Extensão
 
 - Clique em **"Carregar sem compactação"**.
-- Selecione a pasta do projeto `kadem-recorder`.
+- Selecione a pasta do projeto `kaptur-recorder`.
 
 ### 4️⃣ Configuração OAuth2
 
