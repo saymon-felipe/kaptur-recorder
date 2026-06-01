@@ -199,19 +199,6 @@ async function handleStart() {
 
     const selectedSource = selectedElement.dataset.source;
 
-    const hasCamera = !!ui.cameraSelect.value;
-    const hasMic = !!ui.micSelect.value;
-
-    const isWebcamMode = selectedSource === 'webcam';
-
-    if ((isWebcamMode && !hasCamera)) {
-        if (ui.errorMsg) {
-            ui.errorMsg.style.display = 'block';
-            ui.errorMsg.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + "Câmera é obrigatória neste modo.";
-        }
-        return; 
-    }
-
     const useTimer = ui.useTimerCheckbox.checked;
 
     const selectedMicOption = ui.micSelect.options[ui.micSelect.selectedIndex];
@@ -247,20 +234,18 @@ async function handleStart() {
 
 async function refreshDevicesLocal() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        stream.getTracks().forEach(t => t.stop());
-
         const devices = await navigator.mediaDevices.enumerateDevices();
-        populateSelect(ui.cameraSelect, devices.filter(d => d.kind === 'videoinput'), "Sem câmera");
+        populateSelect(ui.cameraSelect, devices.filter(d => d.kind === 'videoinput'), "Câmera padrão");
         populateSelect(ui.micSelect, devices.filter(d => d.kind === 'audioinput'), "Sem microfone");
 
         await restoreDeviceSelection();
         ui.startBtn.disabled = false;
     } catch (error) {
-        console.warn("Permissão negada no Popup:", error);
-        ui.cameraSelect.innerHTML = '<option value="">Permissão negada</option>';
-        ui.micSelect.innerHTML = '<option value="">Permissão negada</option>';
+        console.warn("Falha ao listar dispositivos no Popup:", error);
+        ui.cameraSelect.innerHTML = '<option value="">Dispositivos indisponiveis</option>';
+        ui.micSelect.innerHTML = '<option value="">Dispositivos indisponiveis</option>';
         ui.startBtn.disabled = false;
+        return;
     }
 }
 

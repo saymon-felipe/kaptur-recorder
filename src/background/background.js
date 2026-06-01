@@ -220,9 +220,16 @@ function getAuthToken() {
             const manifest = chrome.runtime.getManifest();
             const clientId = manifest.oauth2.client_id;
             const scopes = manifest.oauth2.scopes.join(' ');
-            const redirectUri = chrome.identity.getRedirectURL();
+            const redirectUri = chrome.identity.getRedirectURL("oauth2");
             if (!clientId) { reject(new Error("Client ID ausente")); return; }
-            const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+            console.log("[Kaptur OAuth] Redirect URI:", redirectUri);
+            const authParams = new URLSearchParams({
+                client_id: clientId,
+                response_type: "token",
+                redirect_uri: redirectUri,
+                scope: scopes
+            });
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${authParams.toString()}`;
             chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, (responseUrl) => {
                 if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); return; }
                 if (responseUrl) {
