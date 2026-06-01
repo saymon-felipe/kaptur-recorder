@@ -389,7 +389,10 @@ class EditorManager {
                 }
             );
 
-            if (res.fileViewLink) window.open(res.fileViewLink);
+            if (res.fileViewLink) {
+                await this._copyTextToClipboard(res.fileViewLink);
+                window.open(res.fileViewLink);
+            }
             else alert("Upload concluído!");
 
         } catch (e) {
@@ -426,6 +429,38 @@ class EditorManager {
             a.remove();
             if (content instanceof Blob) URL.revokeObjectURL(url);
         }, 100);
+    }
+
+    async _copyTextToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (error) {
+            console.warn("Falha ao copiar com Clipboard API:", error);
+        }
+
+        const input = document.createElement("textarea");
+        input.value = text;
+        input.setAttribute("readonly", "");
+        Object.assign(input.style, {
+            position: "fixed",
+            top: "-9999px",
+            left: "-9999px",
+            opacity: "0"
+        });
+
+        document.body.appendChild(input);
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+
+        try {
+            return document.execCommand("copy");
+        } catch (error) {
+            console.warn("Falha ao copiar com fallback:", error);
+            return false;
+        } finally {
+            input.remove();
+        }
     }
 
     /**
