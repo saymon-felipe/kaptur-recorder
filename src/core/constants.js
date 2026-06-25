@@ -21,6 +21,8 @@
 
         RECORDER: {
             MIME_TYPE_PREFERENCE: [
+                "video/webm;codecs=vp9,opus",
+                "video/webm;codecs=vp8,opus",
                 "video/webm;codecs=vp9", 
                 "video/webm;codecs=vp8", 
                 "video/webm"
@@ -51,6 +53,7 @@
             
             SAVE_CHUNK: "save_chunk",
             FINISH_VIDEO: "finish_video",
+            CANCEL_VIDEO: "cancel_video",
             GET_AUTH_TOKEN: "get_auth_token"
         },
         STORAGE: {

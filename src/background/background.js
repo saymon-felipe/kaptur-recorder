@@ -18,6 +18,7 @@ const ACTIONS = {
     SAVE_CHUNK: "save_chunk",
     GET_RESUME_INFO: "get_resume_info",
     FINISH_VIDEO: "finish_video",
+    CANCEL_VIDEO: "cancel_video",
     STOP_RECORDING: "stop_recording_command" 
 };
 
@@ -109,7 +110,12 @@ async function handleMessage(msg, sender) {
                 recordingTabId: state.activeRecordingTabId
             };
         case ACTIONS.GET_AUTH_TOKEN: return getAuthToken();
-        case ACTIONS.REQUEST_DEVICES: return sendMessageToTab(senderTabId, msg);
+        case ACTIONS.REQUEST_DEVICES: {
+            const targetTabId = msg.tabId || senderTabId;
+            if (!targetTabId) return { error: "Nenhuma aba ativa disponível." };
+            await ensureContentScript(targetTabId);
+            return sendMessageToTab(targetTabId, msg);
+        }
         
         case ACTIONS.REQUEST_RECORDING:
             if (state.activeRecordingTabId !== null || state.isProcessingVideo) {
@@ -117,8 +123,13 @@ async function handleMessage(msg, sender) {
             }
             if (msg.tabId) {
                 state.activeRecordingTabId = msg.tabId;
+                state.isProcessingVideo = false;
                 await ensureContentScript(msg.tabId);
-                return sendMessageToTab(msg.tabId, msg);
+                const response = await sendMessageToTab(msg.tabId, msg);
+                if (response?.error) {
+                    resetRecordingState();
+                }
+                return response;
             }
             break;
 
@@ -187,6 +198,14 @@ async function handleMessage(msg, sender) {
             await state.videoStorage.finishVideo(msg.videoId, "video");
             await chrome.storage.local.set({ videoId: msg.videoId, videoTimeout: 0 });
             await chrome.tabs.create({ url: chrome.runtime.getURL("src/editor/editor.html") });
+            resetRecordingState();
+            return { success: true };
+
+        case ACTIONS.CANCEL_VIDEO:
+            if (msg.videoId) {
+                await state.videoStorage.deleteVideo(msg.videoId);
+            }
+            await closeAllPlaybackTabs();
             resetRecordingState();
             return { success: true };
     }
@@ -266,6 +285,10 @@ function updateIcon(type) {
 
 function sendMessageToTab(tabId, message) {
     return new Promise((resolve) => {
+        if (!tabId) {
+            resolve({ error: "Nenhuma aba alvo disponível." });
+            return;
+        }
         chrome.tabs.sendMessage(tabId, message, (response) => {
             if (chrome.runtime.lastError) {
                 resolve({ error: chrome.runtime.lastError.message });

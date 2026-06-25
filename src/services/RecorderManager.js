@@ -20,6 +20,7 @@
             this.chunkIndex = 0;
             this.currentSegment = 0;
             this.sessionOptions = null;
+            this.shouldPersistChunks = true;
 
             this.ui = UI.getInstance();
             this.onUserActionCallback = null;
@@ -60,6 +61,7 @@
             this.sessionOptions = options;
             this.recordingType = options.type || "screen";
             this.onStopCallback = onStopCallback;
+            this.shouldPersistChunks = true;
 
             const timeoutSeconds = parseInt(options.timeout || 0);
 
@@ -88,7 +90,7 @@
             }
 
             this.mediaRecorder.ondataavailable = async (e) => {
-                if (e.data && e.data.size > 0) {
+                if (this.shouldPersistChunks && e.data && e.data.size > 0) {
                     await this._persistChunk(e.data);
                 }
             };
@@ -179,11 +181,18 @@
         }
 
         async cancel() {
+            this.shouldPersistChunks = false;
             if (this.mediaRecorder) {
                 this.mediaRecorder.onstop = null;
-                this.mediaRecorder.stop();
+                if (this.mediaRecorder.state !== "inactive") {
+                    this.mediaRecorder.stop();
+                }
             }
             await this._clearSessionState();
+            await chrome.runtime.sendMessage({
+                action: C.ACTIONS.CANCEL_VIDEO,
+                videoId: this.currentVideoId
+            });
             this._cleanup();
         }
 
@@ -215,6 +224,10 @@
             this.status = "idle";
             this.onUserActionCallback = null;
             this.sessionOptions = null;
+            this.currentVideoId = null;
+            this.chunkIndex = 0;
+            this.currentSegment = 0;
+            this.shouldPersistChunks = true;
             chrome.runtime.sendMessage({ action: C.ACTIONS.CHANGE_ICON, type: "default" });
         }
 

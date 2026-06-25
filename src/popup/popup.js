@@ -13,25 +13,36 @@ const STORAGE_KEYS = {
     CAMERA: "cameraSelect",
     MIC: "microphoneSelect",
     SOURCE: "sourceSelect",
-    TIMER: "waitSeconds",      
-    USE_TIMER: "timeoutCheckbox" 
+    TIMER: "waitSeconds",
+    USE_TIMER: "timeoutCheckbox"s
+};
+
+const DEVICE_VALUES = {
+    NONE: "none",
+    DEFAULT: "default",
+    SPECIFIC_PREFIX: "specific:"
 };
 
 const ui = {
-    sources: document.querySelectorAll('.source-option'),
-    sliderContainer: document.querySelector('.select-source-container'),
-    cameraSelect: document.getElementById('camera-select'),
-    micSelect: document.getElementById('mic-select'),
-    timerSelect: document.getElementById('timer-select'),
-    useTimerCheckbox: document.getElementById('use-timer'),
-    startBtn: document.getElementById('start-btn'),
-    errorMsg: document.getElementById('device-error-msg'),
-    closeBtn: document.getElementById('close-btn'),
-    shortcutsToggle: document.getElementById('shortcuts-toggle'),
-    shortcutsContent: document.getElementById('shortcuts-content')
+    sources: document.querySelectorAll(".source-option"),
+    sliderContainer: document.querySelector(".select-source-container"),
+    cameraSelect: document.getElementById("camera-select"),
+    micSelect: document.getElementById("mic-select"),
+    timerSelect: document.getElementById("timer-select"),
+    useTimerCheckbox: document.getElementById("use-timer"),
+    startBtn: document.getElementById("start-btn"),
+    errorMsg: document.getElementById("device-error-msg"),
+    closeBtn: document.getElementById("close-btn"),
+    shortcutsToggle: document.getElementById("shortcuts-toggle"),
+    shortcutsContent: document.getElementById("shortcuts-content")
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
+let activeTabId = null;
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const activeTab = await getActiveTab();
+    activeTabId = activeTab?.id || null;
+
     const status = await checkGlobalStatus();
 
     if (status.isBusy && status.reason === "recording") {
@@ -41,85 +52,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         ui.startBtn.disabled = true;
         await loadPreferences();
-        await refreshDevicesLocal();
+        await refreshDevices();
         setupListeners();
     }
 });
 
-/**
- * Consulta o estado do Service Worker
- */
 async function checkGlobalStatus() {
-    return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ action: ACTIONS.GET_STATUS }, (response) => {
-            if (response && response.isBusy) {
-                resolve({ 
-                    isBusy: true, 
-                    reason: response.reason,
-                    recordingTabId: response.recordingTabId 
-                });
-            } else {
-                resolve({ isBusy: false });
-            }
-        });
-    });
+    const response = await sendRuntimeMessage({ action: ACTIONS.GET_STATUS });
+    if (response && response.isBusy) {
+        return {
+            isBusy: true,
+            reason: response.reason,
+            recordingTabId: response.recordingTabId
+        };
+    }
+    return { isBusy: false };
 }
 
 function showProcessingState() {
     ui.startBtn.disabled = true;
     ui.startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando Vídeo...';
     if (ui.errorMsg) {
-        ui.errorMsg.style.display = 'block';
-        ui.errorMsg.innerHTML = 'Aguarde a finalização do vídeo anterior.';
+        ui.errorMsg.style.display = "block";
+        ui.errorMsg.innerHTML = "Aguarde a finalização do vídeo anterior.";
     }
 }
 
 function showRecordingState(recordingTabId) {
-    const settingsDiv = document.querySelector('.settings-group');
-    const sourceDiv = document.querySelector('.select-source-container');
-    
-    if(settingsDiv) settingsDiv.style.display = 'none';
-    if(sourceDiv) sourceDiv.style.display = 'none';
+    const configurations = document.querySelector(".configurations");
+    if (configurations) configurations.style.display = "none";
 
     ui.startBtn.disabled = false;
-    ui.startBtn.classList.add('stop-mode');
+    ui.startBtn.classList.add("stop-mode");
     ui.startBtn.innerHTML = '<i class="fa-solid fa-square"></i> PARAR GRAVAÇÃO';
-    
+
     const newBtn = ui.startBtn.cloneNode(true);
     ui.startBtn.parentNode.replaceChild(newBtn, ui.startBtn);
     ui.startBtn = newBtn;
 
-    ui.startBtn.addEventListener('click', () => {
+    ui.startBtn.addEventListener("click", () => {
         ui.startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Parando...';
         ui.startBtn.disabled = true;
-        
-        const stopPayload = { 
-            action: "keyboard_command", 
+
+        const stopPayload = {
+            action: "keyboard_command",
             command: "stop"
         };
 
         if (recordingTabId) {
-            chrome.tabs.sendMessage(recordingTabId, stopPayload, (resp) => {
-                setTimeout(() => window.close(), 500); 
+            chrome.tabs.sendMessage(recordingTabId, stopPayload, () => {
+                setTimeout(() => window.close(), 500);
             });
         } else {
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                if(tabs[0]) chrome.tabs.sendMessage(tabs[0].id, stopPayload);
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, stopPayload);
                 window.close();
             });
         }
     });
 
     if (ui.errorMsg) {
-        ui.errorMsg.style.display = 'block';
-        ui.errorMsg.style.color = '#e74c3c';
+        ui.errorMsg.style.display = "block";
+        ui.errorMsg.style.color = "#e74c3c";
         ui.errorMsg.innerHTML = '<i class="fa-solid fa-circle fa-beat"></i> Gravando em andamento...';
     }
 }
 
-/**
- * Carrega e APLICA as configurações salvas no Chrome Storage.
- */
 async function loadPreferences() {
     const data = await chrome.storage.local.get([
         STORAGE_KEYS.SOURCE,
@@ -129,11 +127,11 @@ async function loadPreferences() {
 
     if (data[STORAGE_KEYS.SOURCE]) {
         const sourcesArray = Array.from(ui.sources);
-        const targetIndex = sourcesArray.findIndex(s => s.dataset.source === data[STORAGE_KEYS.SOURCE]);
+        const targetIndex = sourcesArray.findIndex((source) => source.dataset.source === data[STORAGE_KEYS.SOURCE]);
         if (targetIndex !== -1) {
-            ui.sources.forEach(s => s.classList.remove('selected'));
-            ui.sources[targetIndex].classList.add('selected');
-            ui.sliderContainer.setAttribute('data-selected-index', targetIndex);
+            ui.sources.forEach((source) => source.classList.remove("selected"));
+            ui.sources[targetIndex].classList.add("selected");
+            ui.sliderContainer.setAttribute("data-selected-index", targetIndex);
         }
     }
 
@@ -147,132 +145,196 @@ async function loadPreferences() {
 }
 
 function setupListeners() {
-    ui.sources.forEach((src, index) => {
-        src.addEventListener('click', () => {
-            ui.sources.forEach(s => s.classList.remove('selected'));
-            src.classList.add('selected');
-            ui.sliderContainer.setAttribute('data-selected-index', index);
-            savePreference(STORAGE_KEYS.SOURCE, src.dataset.source);
-            if (ui.errorMsg) ui.errorMsg.style.display = 'none';
+    ui.sources.forEach((source, index) => {
+        source.addEventListener("click", () => {
+            ui.sources.forEach((item) => item.classList.remove("selected"));
+            source.classList.add("selected");
+            ui.sliderContainer.setAttribute("data-selected-index", index);
+            savePreference(STORAGE_KEYS.SOURCE, source.dataset.source);
+            if (ui.errorMsg) ui.errorMsg.style.display = "none";
         });
     });
 
-    ui.timerSelect.addEventListener('change', (e) => savePreference(STORAGE_KEYS.TIMER, e.target.value));
-    ui.useTimerCheckbox.addEventListener('change', (e) => savePreference(STORAGE_KEYS.USE_TIMER, e.target.checked));
+    ui.timerSelect.addEventListener("change", (event) => savePreference(STORAGE_KEYS.TIMER, event.target.value));
+    ui.useTimerCheckbox.addEventListener("change", (event) => savePreference(STORAGE_KEYS.USE_TIMER, event.target.checked));
+    ui.cameraSelect.addEventListener("change", (event) => savePreference(STORAGE_KEYS.CAMERA, event.target.value));
+    ui.micSelect.addEventListener("change", (event) => savePreference(STORAGE_KEYS.MIC, event.target.value));
 
-    ui.cameraSelect.addEventListener('change', (e) => {
-        const label = e.target.options[e.target.selectedIndex]?.text;
-        if (label) savePreference(STORAGE_KEYS.CAMERA, label);
-    });
-
-    ui.micSelect.addEventListener('change', (e) => {
-        const label = e.target.options[e.target.selectedIndex]?.text;
-        if (label) savePreference(STORAGE_KEYS.MIC, label);
-    });
-
-    ui.startBtn.addEventListener('click', handleStart);
-    ui.closeBtn.addEventListener('click', closePopup);
+    ui.startBtn.addEventListener("click", handleStart);
+    ui.closeBtn.addEventListener("click", closePopup);
 
     if (ui.shortcutsToggle) {
-        ui.shortcutsToggle.addEventListener('click', () => {
-            ui.shortcutsContent.classList.toggle('open');
-            ui.shortcutsToggle.classList.toggle('active');
+        ui.shortcutsToggle.addEventListener("click", () => {
+            ui.shortcutsContent.classList.toggle("open");
+            ui.shortcutsToggle.classList.toggle("active");
         });
     }
 
-    const btnStudio = document.getElementById('btn-open-studio');
+    const btnStudio = document.getElementById("btn-open-studio");
     if (btnStudio) {
-        btnStudio.addEventListener('click', () => {
-            chrome.tabs.create({ url: chrome.runtime.getURL('src/editor/editor.html?mode=studio') });
+        btnStudio.addEventListener("click", () => {
+            chrome.tabs.create({ url: chrome.runtime.getURL("src/editor/editor.html?mode=studio") });
         });
     }
 }
 
 async function handleStart() {
-    const tab = await getActiveTab();
-    if (!tab) return;
+    const tabId = activeTabId || (await getActiveTab())?.id;
+    if (!tabId) return;
 
-    if (ui.errorMsg) ui.errorMsg.style.display = 'none';
+    if (ui.errorMsg) ui.errorMsg.style.display = "none";
 
-    const selectedElement = document.querySelector('.source-option.selected');
+    const selectedElement = document.querySelector(".source-option.selected");
     if (!selectedElement) return;
 
     const selectedSource = selectedElement.dataset.source;
-
     const useTimer = ui.useTimerCheckbox.checked;
-
-    const selectedMicOption = ui.micSelect.options[ui.micSelect.selectedIndex];
-    const micLabel = selectedMicOption.value ? selectedMicOption.text : null;
-
-    const selectedCamOption = ui.cameraSelect.options[ui.cameraSelect.selectedIndex];
-    const camLabel = selectedCamOption.value ? selectedCamOption.text : null;
 
     const payload = {
         action: ACTIONS.REQUEST_RECORDING,
         type: selectedSource,
-        webcamLabel: camLabel,
-        microfoneLabel: micLabel,
-        webcamId: ui.cameraSelect.value,
-        microfoneId: ui.micSelect.value,
-        timeout: useTimer ? parseInt(ui.timerSelect.value) : 0,
-        tabId: tab.id
+        cameraSelection: getDeviceSelection(ui.cameraSelect),
+        microphoneSelection: getDeviceSelection(ui.micSelect),
+        timeout: useTimer ? parseInt(ui.timerSelect.value, 10) : 0,
+        tabId
     };
 
     ui.startBtn.disabled = true;
     ui.startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Iniciando...';
 
-    chrome.tabs.sendMessage(tab.id, payload, (response) => {
-        if (chrome.runtime.lastError || (response && response.error)) {
-            ui.startBtn.disabled = false;
-            ui.startBtn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> Iniciar gravação';
-            alert("Erro: " + (chrome.runtime.lastError?.message || response?.error));
-        } else if (response && response.allow) {
-            closePopup();
-        }
-    });
+    const response = await sendRuntimeMessage(payload);
+    if (response?.error) {
+        ui.startBtn.disabled = false;
+        ui.startBtn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> Iniciar gravacao';
+        alert("Erro: " + response.error);
+        return;
+    }
+
+    if (response?.allow) {
+        closePopup();
+    }
 }
 
-async function refreshDevicesLocal() {
+async function refreshDevices() {
     try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        populateSelect(ui.cameraSelect, devices.filter(d => d.kind === 'videoinput'), "Câmera padrão");
-        populateSelect(ui.micSelect, devices.filter(d => d.kind === 'audioinput'), "Sem microfone");
+        if (!activeTabId) throw new Error("Nenhuma aba ativa disponivel.");
+
+        const response = await sendRuntimeMessage({
+            action: ACTIONS.REQUEST_DEVICES,
+            tabId: activeTabId
+        });
+
+        if (response?.error) throw new Error(response.error);
+
+        populateDeviceSelect(ui.cameraSelect, response?.videoInputs || [], {
+            noneLabel: "Não mostrar câmera",
+            defaultLabel: "Câmera padrão",
+            genericLabel: "Câmera"
+        });
+
+        populateDeviceSelect(ui.micSelect, response?.audioInputs || [], {
+            noneLabel: "Sem microfone",
+            defaultLabel: "Microfone padrão",
+            genericLabel: "Microfone"
+        });
 
         await restoreDeviceSelection();
         ui.startBtn.disabled = false;
     } catch (error) {
-        console.warn("Falha ao listar dispositivos no Popup:", error);
-        ui.cameraSelect.innerHTML = '<option value="">Dispositivos indisponiveis</option>';
-        ui.micSelect.innerHTML = '<option value="">Dispositivos indisponiveis</option>';
+        console.warn("Falha ao listar dispositivos no popup:", error);
+        populateDeviceSelect(ui.cameraSelect, [], {
+            noneLabel: "Não mostrar câmera",
+            defaultLabel: "Câmera padrão",
+            genericLabel: "Câmera"
+        });
+        populateDeviceSelect(ui.micSelect, [], {
+            noneLabel: "Sem microfone",
+            defaultLabel: "Microfone padrão",
+            genericLabel: "Microfone"
+        });
         ui.startBtn.disabled = false;
-        return;
     }
 }
 
-function populateSelect(select, devices, defaultLabel) {
-    select.innerHTML = '';
-    const def = document.createElement('option');
-    def.value = ""; def.text = defaultLabel;
-    select.appendChild(def);
-    devices.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d.deviceId; opt.text = d.label || `Disp. ${d.deviceId.substring(0, 5)}`;
-        select.appendChild(opt);
+function populateDeviceSelect(select, devices, labels) {
+    select.innerHTML = "";
+
+    appendOption(select, DEVICE_VALUES.NONE, labels.noneLabel);
+    appendOption(select, DEVICE_VALUES.DEFAULT, labels.defaultLabel);
+
+    devices.forEach((device, index) => {
+        const label = device.label || `${labels.genericLabel} ${index + 1}`;
+        appendOption(select, `${DEVICE_VALUES.SPECIFIC_PREFIX}${device.deviceId}`, label);
     });
+}
+
+function appendOption(select, value, text) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.text = text;
+    select.appendChild(option);
 }
 
 async function restoreDeviceSelection() {
     const data = await chrome.storage.local.get([STORAGE_KEYS.CAMERA, STORAGE_KEYS.MIC]);
-    if (data[STORAGE_KEYS.CAMERA]) setSelectByLabel(ui.cameraSelect, data[STORAGE_KEYS.CAMERA]);
-    if (data[STORAGE_KEYS.MIC]) setSelectByLabel(ui.micSelect, data[STORAGE_KEYS.MIC]);
+    setSelectByStoredValue(ui.cameraSelect, data[STORAGE_KEYS.CAMERA], "camera");
+    setSelectByStoredValue(ui.micSelect, data[STORAGE_KEYS.MIC], "microphone");
 }
 
-function setSelectByLabel(select, label) {
-    const opt = Array.from(select.options).find(o => o.text === label);
-    if (opt) select.value = opt.value;
+function setSelectByStoredValue(select, storedValue, kind) {
+    if (!storedValue) return;
+
+    const preferredValue = normalizeLegacyStoredValue(storedValue, kind);
+    const exactOption = Array.from(select.options).find((option) => option.value === preferredValue);
+    if (exactOption) {
+        select.value = exactOption.value;
+        return;
+    }
+
+    const legacyLabelOption = Array.from(select.options).find((option) => option.text === storedValue);
+    if (legacyLabelOption) {
+        select.value = legacyLabelOption.value;
+    }
 }
 
-function savePreference(key, value) { chrome.storage.local.set({ [key]: value }); }
+function normalizeLegacyStoredValue(storedValue, kind) {
+    if (typeof storedValue !== "string") return storedValue;
+    if (storedValue === DEVICE_VALUES.NONE || storedValue === DEVICE_VALUES.DEFAULT || storedValue.startsWith(DEVICE_VALUES.SPECIFIC_PREFIX)) {
+        return storedValue;
+    }
+
+    if (kind === "camera") {
+        if (storedValue === "Câmera padrão") return DEVICE_VALUES.DEFAULT;
+        if (storedValue === "Não mostrar câmera") return DEVICE_VALUES.NONE;
+    } else {
+        if (storedValue === "Sem microfone") return DEVICE_VALUES.NONE;
+        if (storedValue === "Microfone padrão") return DEVICE_VALUES.DEFAULT;
+    }
+
+    return storedValue;
+}
+
+function getDeviceSelection(select) {
+    const value = select.value;
+    const option = select.options[select.selectedIndex];
+    if (!value || value === DEVICE_VALUES.NONE) {
+        return { mode: "none" };
+    }
+
+    if (value === DEVICE_VALUES.DEFAULT) {
+        return { mode: "default" };
+    }
+
+    return {
+        mode: "specific",
+        deviceId: value.replace(DEVICE_VALUES.SPECIFIC_PREFIX, ""),
+        label: option?.text || null
+    };
+}
+
+function savePreference(key, value) {
+    chrome.storage.local.set({ [key]: value });
+}
 
 async function getActiveTab() {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -285,10 +347,25 @@ function closePopup() {
             chrome.scripting.executeScript({
                 target: { tabId: tabs[0].id },
                 func: () => {
-                    const el = document.getElementById("kaptur-recorder-iframe");
-                    if (el) { el.style.opacity = "0"; setTimeout(() => el.remove(), 300); }
+                    const element = document.getElementById("kaptur-recorder-iframe");
+                    if (element) {
+                        element.style.opacity = "0";
+                        setTimeout(() => element.remove(), 300);
+                    }
                 }
             });
         }
+    });
+}
+
+function sendRuntimeMessage(message) {
+    return new Promise((resolve) => {
+        chrome.runtime.sendMessage(message, (response) => {
+            if (chrome.runtime.lastError) {s
+                resolve({ error: chrome.runtime.lastError.message });
+                return;
+            }
+            resolve(response);
+        });
     });
 }

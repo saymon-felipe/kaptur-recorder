@@ -79,6 +79,31 @@ export class VideoStorage {
         });
     }
 
+    async deleteVideo(videoId) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.metaStore, this.chunkStore], "readwrite");
+            const metaStore = transaction.objectStore(this.metaStore);
+            const chunkStore = transaction.objectStore(this.chunkStore);
+            const chunkIndex = chunkStore.index("videoId");
+
+            metaStore.delete(videoId);
+
+            const cursorRequest = chunkIndex.openCursor(IDBKeyRange.only(videoId));
+            cursorRequest.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (!cursor) return;
+                cursor.delete();
+                cursor.continue();
+            };
+            cursorRequest.onerror = (event) => reject(event.target.error);
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = (event) => reject(event.target.error);
+            transaction.onabort = (event) => reject(event.target.error);
+        });
+    }
+
     async getVideoSegments(videoId) {
         if (!this.db) await this.init();
         const chunks = await this._getAllChunks(videoId);

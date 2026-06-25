@@ -11,7 +11,7 @@
             this.destination = null;
         }
 
-        mix(baseStream, secondaryStream) {
+        async mix(baseStream, secondaryStream) {
             if (!secondaryStream) {
                 return baseStream;
             }
@@ -26,6 +26,13 @@
             }
 
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (this.audioContext.state === "suspended") {
+                try {
+                    await this.audioContext.resume();
+                } catch (error) {
+                    console.warn("[AudioMixer] Falha ao ativar AudioContext:", error);
+                }
+            }
             this.destination = this.audioContext.createMediaStreamDestination();
 
             if (baseAudioTracks.length > 0) {
