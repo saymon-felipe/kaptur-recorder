@@ -187,7 +187,9 @@ async function handleMessage(msg, sender) {
 
         case ACTIONS.SAVE_CHUNK:
             state.isProcessingVideo = true;
-            const chunkBlob = new Blob([new Uint8Array(msg.data)]);
+            const chunkBlob = new Blob([new Uint8Array(msg.data)], {
+                type: msg.mimeType || "video/webm"
+            });
             await state.videoStorage.saveChunk(msg.videoId, chunkBlob, msg.index, msg.segment);
             return { success: true };
 

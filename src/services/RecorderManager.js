@@ -21,6 +21,8 @@
             this.currentSegment = 0;
             this.sessionOptions = null;
             this.shouldPersistChunks = true;
+            this.pendingChunkWrites = new Set();
+            this.mimeType = "video/webm";
 
             this.ui = UI.getInstance();
             this.onUserActionCallback = null;
@@ -62,6 +64,7 @@
             this.recordingType = options.type || "screen";
             this.onStopCallback = onStopCallback;
             this.shouldPersistChunks = true;
+            this.pendingChunkWrites.clear();
 
             const timeoutSeconds = parseInt(options.timeout || 0);
 
@@ -88,10 +91,14 @@
                 console.warn("Falha codec preferido:", e);
                 this.mediaRecorder = new MediaRecorder(stream);
             }
+            this.mimeType = this.mediaRecorder.mimeType || "video/webm";
 
-            this.mediaRecorder.ondataavailable = async (e) => {
+            this.mediaRecorder.ondataavailable = (e) => {
                 if (this.shouldPersistChunks && e.data && e.data.size > 0) {
-                    await this._persistChunk(e.data);
+                    const write = this._persistChunk(e.data)
+                        .catch((error) => console.error("Erro ao salvar fragmento:", error));
+                    this.pendingChunkWrites.add(write);
+                    write.finally(() => this.pendingChunkWrites.delete(write));
                 }
             };
 
@@ -136,6 +143,7 @@
                     videoId: this.currentVideoId,
                     index: indexToSend,
                     segment: this.currentSegment,
+                    mimeType: this.mimeType,
                     data: dataArray
                 });
             } catch (error) {
@@ -163,14 +171,22 @@
         }
 
         async stop() {
+            if (this.status === "stopping" || this.status === "idle") return;
+            this.status = "stopping";
+
             if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
-                this.mediaRecorder.stop();
+                await new Promise((resolve) => {
+                    this.mediaRecorder.addEventListener("stop", resolve, { once: true });
+                    this.mediaRecorder.stop();
+                });
             }
 
             this._stopTimer();
             await this._clearSessionState();
 
-            await new Promise(r => setTimeout(r, 800));
+            // O evento final de dados pode chegar pouco antes do "stop". Aguarda o
+            // IndexedDB receber todos os fragmentos antes de abrir o editor.
+            await Promise.all([...this.pendingChunkWrites]);
 
             chrome.runtime.sendMessage({
                 action: "finish_video",
@@ -228,6 +244,8 @@
             this.chunkIndex = 0;
             this.currentSegment = 0;
             this.shouldPersistChunks = true;
+            this.pendingChunkWrites.clear();
+            this.mimeType = "video/webm";
             chrome.runtime.sendMessage({ action: C.ACTIONS.CHANGE_ICON, type: "default" });
         }
 

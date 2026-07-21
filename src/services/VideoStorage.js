@@ -121,7 +121,7 @@ export class VideoStorage {
             const segChunks = segments[segId];
             segChunks.sort((a, b) => a.index - b.index);
             const blobParts = segChunks.map(c => c.blob);
-            result.push(new Blob(blobParts, { type: segChunks[0].blob.type }));
+            result.push(new Blob(blobParts, { type: segChunks[0].blob.type || "video/webm" }));
         });
 
         return result;
@@ -148,7 +148,7 @@ export class VideoStorage {
         });
 
         const blobParts = chunks.map(c => c.blob);
-        const mimeType = chunks[0].blob.type;
+        const mimeType = chunks[0].blob.type || "video/webm";
 
         try {
             return new Blob(blobParts, { type: mimeType });

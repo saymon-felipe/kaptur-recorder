@@ -182,8 +182,44 @@ export class TranscodeService {
         if (!this.isLoaded) await this.init();
         if (!segments || segments.length === 0) throw new Error("Sem segmentos para mesclar.");
 
+        if (segments.length === 1) {
+            return await this._finalizeWebm(segments[0], outputName);
+        }
+
         console.log("[SmartMerge] Iniciando Ultrafast Re-encode...");
         return await this._mergeUltrafast(segments, outputName);
+    }
+
+    /**
+     * Reempacota um WebM do MediaRecorder para escrever Duration, Cues e índices
+     * no contêiner. Isso mantém os streams originais e torna o seek compatível
+     * com players do Windows sem o custo de uma nova codificação.
+     */
+    async _finalizeWebm(segment, baseName) {
+        const fetchFile = this._getFetchFile();
+        const timestamp = Date.now();
+        const inputName = `finalize_${baseName}_${timestamp}.webm`;
+        const outName = `finalized_${baseName}_${timestamp}.webm`;
+
+        try {
+            await this.ffmpeg.writeFile(inputName, await fetchFile(segment));
+            await this.ffmpeg.exec([
+                "-fflags", "+genpts",
+                "-i", inputName,
+                "-map", "0",
+                "-c", "copy",
+                "-avoid_negative_ts", "make_zero",
+                "-cues_to_front", "1",
+                outName
+            ]);
+
+            const data = await this.ffmpeg.readFile(outName);
+            if (data.byteLength === 0) throw new Error("Arquivo vazio gerado na finalização.");
+            return URL.createObjectURL(new Blob([data.buffer], { type: "video/webm" }));
+        } finally {
+            try { await this.ffmpeg.deleteFile(inputName); } catch (e) { }
+            try { await this.ffmpeg.deleteFile(outName); } catch (e) { }
+        }
     }
 
     async _mergeUltrafast(segments, baseName) {

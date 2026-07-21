@@ -14,7 +14,7 @@ const STORAGE_KEYS = {
     MIC: "microphoneSelect",
     SOURCE: "sourceSelect",
     TIMER: "waitSeconds",
-    USE_TIMER: "timeoutCheckbox"s
+    USE_TIMER: "timeoutCheckbox"
 };
 
 const DEVICE_VALUES = {

@@ -109,12 +109,17 @@ class EditorManager {
                     console.log(`[Editor] Vídeo encontrado na tentativa ${i + 1}.`);
 
                     if (segments.length > 1) {
-                        this._setLoading(true, "Unindo segmentos...");
+                        this._setLoading(true, "Unindo e finalizando segmentos...");
                         const mergedUrl = await this.transcoder.mergeSegments(segments, "merged_video");
                         const resp = await fetch(mergedUrl);
                         videoBlob = await resp.blob();
+                        URL.revokeObjectURL(mergedUrl);
                     } else {
-                        videoBlob = segments[0];
+                        this._setLoading(true, "Finalizando metadados do vídeo...");
+                        const finalizedUrl = await this.transcoder.mergeSegments(segments, "recording");
+                        const resp = await fetch(finalizedUrl);
+                        videoBlob = await resp.blob();
+                        URL.revokeObjectURL(finalizedUrl);
                     }
                     break;
                 }
